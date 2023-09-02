@@ -1,25 +1,28 @@
 console.log(trelloData);
 
 // Data rendering file
-// Read trelloData, find the data display row
-// Genereate HTML elements based on the data
+// Read trelloData, find the data display row and
+// generate HTML elements based on the trelloData
 
 function renderColumns() {
 	let trelloDataRowRootNode = document.getElementById("dataDisplayRow");
-	// Remove all previous data from root node
+	// Removing any stale or old HTML content:
 	trelloDataRowRootNode.innerHTML = "";
 
-	// Generating new HTML content
+	// Generating new HTML content:
 	trelloData.columns.forEach((column) => {
 		console.log(column.name);
 
 		let columnNode = document.createElement("div");
 
+		// Set the column ID in the DOM
+		columnNode.id = column.name;
+
 		columnNode.classList.add("trelloColumn");
 
-		// Give the columns some drag and drop event handling
+		// Give the columns some drag & drop event handling
 		columnNode.addEventListener("dragover", allowDrop);
-		// Allow us to detect when a card is dropped into a column
+		// Allow us to detect when a card is dropped into a column:
 		columnNode.addEventListener("drop", dropCard);
 
 		// Create content to render column data
@@ -33,9 +36,9 @@ function renderColumns() {
 				.getElementById("cardPreview")
 				.cloneNode(true);
 
-			// If timestamp is not a number, set it to current time
 			if (!card.timestamp || isNaN(card.timestamp)) {
 				card.timestamp = Date.now();
+				// Number like 1287653419435
 			}
 			newCard.id = card.timestamp;
 
@@ -46,7 +49,7 @@ function renderColumns() {
 			newCard.querySelector(".cardDisplay-content").innerText =
 				card.content;
 
-			// // Allow cards to be dragable
+			// Allow cards to be draggable
 			newCard.addEventListener("dragstart", drag);
 
 			// After data is all done, attach card to column
@@ -57,14 +60,17 @@ function renderColumns() {
 	});
 }
 
-// When we drag a DOM elemtn around,
-// Tell browser about some data that we are dragging
+// When we drag a DOM element around,
+// tell the browser some data about what we are dragging
 function drag(event) {
+	console.log("element dragged, has ID of:" + event.target.id);
 	event.dataTransfer.setData("text", event.target.id);
 }
 
-//  Removing default browser behavior for elements
-// That receive a drag and drop
+document.getElementById("cardPreview").addEventListener("dragstart", drag);
+
+// Removing default browser behaviour for elements
+// that receive a drag and drop
 function allowDrop(event) {
 	event.preventDefault();
 }
@@ -73,7 +79,35 @@ function dropCard(event) {
 	event.preventDefault();
 
 	let data = event.dataTransfer.getData("text");
-	console.log("Dropped card ID is" + data);
+	console.log("Dropped card ID is:" + data);
+
+	let oldCardElement = document.getElementById(data);
+	let oldCardData = {
+		title: oldCardElement.getElementsByClassName("cardDisplay-title")[0]
+			.innerText,
+		content: oldCardElement.getElementsByClassName("cardDisplay-content")[0]
+			.innerText,
+		timestamp: oldCardElement.id,
+	};
+	console.log("oldCardData is:" + JSON.stringify(oldCardData, null, 4));
+
+	// Find the column data for the column that we just dragged
+	// the card on to, and push that card into its data.
+	trelloData.columns.forEach((column) => {
+		column.cards = column.cards.filter(
+			(card) => card.timestamp != oldCardData.timestamp
+		);
+		if (column.name == event.target.id) {
+			column.cards.push(oldCardData);
+		} else {
+			console.log("Drop event ID is: " + event.target.id);
+		}
+	});
+
+	console.log("New trello data is:\n" + JSON.stringify(trelloData, null, 4));
+
+	// Any time we modify trelloData, we should re-render the columns & cards
+	renderColumns();
 }
 
 renderColumns();
