@@ -17,6 +17,9 @@ function renderColumns() {
 
 		columnNode.classList.add("trelloColumn");
 
+		// Give the columns some drag and drop event handling
+		columnNode.addEventListener("dragover", allowDrop);
+
 		// Create content to render column data
 		let columnHeading = document.createElement("h3");
 		columnHeading.innerText = column.name;
@@ -41,12 +44,27 @@ function renderColumns() {
 			newCard.querySelector(".cardDisplay-content").innerText =
 				card.content;
 
+			// // Allow cards to be dragable
+			newCard.addEventListener("dragstart", drag);
+
 			// After data is all done, attach card to column
 			columnNode.appendChild(newCard);
 		});
 
 		trelloDataRowRootNode.appendChild(columnNode);
 	});
+}
+
+// When we drag a DOM elemtn around,
+// Tell browser about some data that we are dragging
+function drag(event) {
+	event.dataTransfer.setData("text", event.target.id);
+}
+
+//  Removing default browser behavior for elements
+// That receive a drag and drop
+function allowDrop(event) {
+	event.preventDefault();
 }
 
 renderColumns();
